@@ -102,9 +102,12 @@ if __name__ == "__main__":
     IMX455 = Cmos(3.76 / 1000, 9602, 6498, name="IMX455")
     IMX571 = Cmos(3.76 / 1000, 6280, 4264, name="IMX571")
     SonyBSI = Cmos(2.48 / 1000, 9600, 6376, name="Sony BSI")
+    IMX264 = Cmos(3.45 / 1000, 2448, 2048, name="IMX264")
     Cannon5D = Cmos(5.36 / 1000, 6720, 4480, name="Cannon 5D mark IV")
-    sensor_list = [IMX366, IMX455, IMX540, IMX541, IMX571, IMX677, SonyBSI, Cannon5D]
-    lens_list = [8, 12, 16, 20, 24, 50]
+    SonyILx = Cmos(3.8 / 1000, 9504, 6336, name="SonyILx")
+    # sensor_list = [IMX366, IMX455, IMX540, IMX541, IMX571, IMX677, SonyBSI, Cannon5D]
+    sensor_list = [IMX541, IMX540, IMX264, SonyILx]
+    lens_list = [8, 12, 16, 20, 24,35, 50]
     agl = 4500
     with open("rst.csv", "w") as f:
         f.write("Sensor,lens(mm),AGL,fov(deg),swath,smallest feature, pixel size, H, V\n")
