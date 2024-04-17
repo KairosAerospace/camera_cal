@@ -91,8 +91,6 @@ class Camera:
         return speed_pixel
 
 
-
-
 def cal_sensor(coms: Cmos, lens_f, agl):
     # h, v, diag = coms.get_size()
     # fov_ang = cal_fov_ang(h, lens_f)
@@ -119,7 +117,7 @@ if __name__ == "__main__":
     SonyILx = Cmos(3.8 / 1000, 9504, 6336, name="SonyILx")
     # sensor_list = [IMX366, IMX455, IMX540, IMX541, IMX571, IMX677, SonyBSI, Cannon5D]
     sensor_list = [IMX541, IMX540, IMX264, SonyILx]
-    lens_list = [8, 12, 16, 20, 24,35, 50]
+    lens_list = [8, 12, 16, 20, 24, 35, 50]
     agl = 4500
     with open("cameras.csv", "w") as f:
         f.write("Sensor,lens(mm),AGL,fov(deg),swath,smallest feature, pixel size, H, V, blur(pixel/10000s @ "
