@@ -121,16 +121,16 @@ if __name__ == "__main__":
     sensor_list = [IMX541, IMX540, IMX264, SonyILx]
     lens_list = [8, 12, 16, 20, 24,35, 50]
     agl = 4500
-    with open("rst.csv", "w") as f:
+    with open("cameras.csv", "w") as f:
         f.write("Sensor,lens(mm),AGL,fov(deg),swath,smallest feature, pixel size, H, V, blur(pixel/10000s @ "
-                "252.5feet/s)\n")
+                "262.5feet/s)\n")
         for s in sensor_list:
             for lens in lens_list:
                 swath, fov_ang, smallest_feature, blur = cal_sensor(s, lens, agl)
                 fov_deg = math.degrees(fov_ang)
                 if 40 <= fov_deg <= 90:
                     print(s.name, "    lens: ", lens, "    fov: ", fov_deg, "    swath:", swath,
-                          "    smallest feature: ", smallest_feature, "    blur(pixel/10000s @ GS 252.5feet/s)", blur)
+                          "    smallest feature: ", smallest_feature, "    blur(pixel/10000s @ GS 262.5feet/s)", blur)
                     line = s.name + "," + str(lens) + "," + str(agl) + "," + str(fov_deg) + "," + \
                            str(swath) + "," + str(smallest_feature) + "," + str(s.ps) + "," + str(s.H) + "," + str(
                         s.V) + "," + str(blur) + "\n"
