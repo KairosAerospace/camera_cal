@@ -61,25 +61,36 @@ class Camera:
         _, v, _ = self.cmos.get_size()
         return 2.0 * math.atan(v / 2.0 / self.lens_f)
 
-    def get_swath_h(self, agl):
+    def get_swath_h(self, dist):
         fov = self.get_fov_h()
-        swath = 2 * agl * math.tan(fov / 2.0)
+        swath = 2 * dist * math.tan(fov / 2.0)
         return swath
 
-    def get_swath_v(self, agl):
+    def get_swath_v(self, dist):
         fov = self.get_fov_v()
-        swath = 2 * agl * math.tan(fov / 2.0)
+        swath = 2 * dist * math.tan(fov / 2.0)
         return swath
 
-    def get_smallest_feature_h(self, agl):
-        swath = self.get_swath_h(agl)
+    def get_smallest_feature_h(self, dist):
+        swath = self.get_swath_h(dist)
         smallest_feature = 2 * swath / self.cmos.H
         return smallest_feature
 
-    def get_smallest_feature_v(self, agl):
-        swath = self.get_swath_v(agl)
+    def get_smallest_feature_v(self, dist):
+        swath = self.get_swath_v(dist)
         smallest_feature = 2 * swath / self.cmos.V
         return smallest_feature
+
+    def pixel_size_real(self, dist):
+        pixel_size_real = dist / self.lens_f * self.cmos.ps
+        return pixel_size_real
+
+    def cal_blur(self, speed, dist):
+        pr = self.pixel_size_real(dist)
+        speed_pixel = speed / pr
+        return speed_pixel
+
+
 
 
 def cal_sensor(coms: Cmos, lens_f, agl):
@@ -91,7 +102,8 @@ def cal_sensor(coms: Cmos, lens_f, agl):
     swath = cam.get_swath_h(agl)
     fov_ang = cam.get_fov_h()
     smallest_feature = cam.get_smallest_feature_h(agl)
-    return swath, fov_ang, smallest_feature
+    blur = cam.cal_blur(262.5, agl) / 10000
+    return swath, fov_ang, smallest_feature, blur
 
 
 if __name__ == "__main__":
@@ -104,18 +116,20 @@ if __name__ == "__main__":
     SonyBSI = Cmos(2.48 / 1000, 9600, 6376, name="Sony BSI")
     Cannon5D = Cmos(5.36 / 1000, 6720, 4480, name="Cannon 5D mark IV")
     sensor_list = [IMX366, IMX455, IMX540, IMX541, IMX571, IMX677, SonyBSI, Cannon5D]
+    # sensor_list = [IMX540]
     lens_list = [8, 12, 16, 20, 24, 50]
     agl = 4500
     with open("rst.csv", "w") as f:
-        f.write("Sensor,lens(mm),AGL,fov(deg),swath,smallest feature, pixel size, H, V\n")
+        f.write("Sensor,lens(mm),AGL,fov(deg),swath,smallest feature, pixel size, H, V, blur(pixel/10000s @ "
+                "252.5feet/s)\n")
         for s in sensor_list:
             for lens in lens_list:
-                swath, fov_ang, smallest_feature = cal_sensor(s, lens, agl)
+                swath, fov_ang, smallest_feature, blur = cal_sensor(s, lens, agl)
                 fov_deg = math.degrees(fov_ang)
                 if 40 <= fov_deg <= 90:
                     print(s.name, "    lens: ", lens, "    fov: ", fov_deg, "    swath:", swath,
-                          "    smallest feature: ", smallest_feature)
+                          "    smallest feature: ", smallest_feature, "    blur(pixel/10000s @ GS 252.5feet/s)", blur)
                     line = s.name + "," + str(lens) + "," + str(agl) + "," + str(fov_deg) + "," + \
                            str(swath) + "," + str(smallest_feature) + "," + str(s.ps) + "," + str(s.H) + "," + str(
-                        s.V) + "\n"
+                        s.V) + "," + str(blur) + "\n"
                     f.write(line)
