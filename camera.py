@@ -61,6 +61,10 @@ class Camera:
         _, v, _ = self.cmos.get_size()
         return 2.0 * math.atan(v / 2.0 / self.lens_f)
 
+    def get_fov_diag(self):
+        _, _, d = self.cmos.get_size()
+        return 2.0 * math.atan(d / 2.0 / self.lens_f)
+
     def get_swath_h(self, dist):
         fov = self.get_fov_h()
         swath = 2 * dist * math.tan(fov / 2.0)
