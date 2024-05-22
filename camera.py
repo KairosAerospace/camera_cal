@@ -61,25 +61,38 @@ class Camera:
         _, v, _ = self.cmos.get_size()
         return 2.0 * math.atan(v / 2.0 / self.lens_f)
 
-    def get_swath_h(self, agl):
+    def get_fov_diag(self):
+        _, _, d = self.cmos.get_size()
+        return 2.0 * math.atan(d / 2.0 / self.lens_f)
+
+    def get_swath_h(self, dist):
         fov = self.get_fov_h()
-        swath = 2 * agl * math.tan(fov / 2.0)
+        swath = 2 * dist * math.tan(fov / 2.0)
         return swath
 
-    def get_swath_v(self, agl):
+    def get_swath_v(self, dist):
         fov = self.get_fov_v()
-        swath = 2 * agl * math.tan(fov / 2.0)
+        swath = 2 * dist * math.tan(fov / 2.0)
         return swath
 
-    def get_smallest_feature_h(self, agl):
-        swath = self.get_swath_h(agl)
+    def get_smallest_feature_h(self, dist):
+        swath = self.get_swath_h(dist)
         smallest_feature = 2 * swath / self.cmos.H
         return smallest_feature
 
-    def get_smallest_feature_v(self, agl):
-        swath = self.get_swath_v(agl)
+    def get_smallest_feature_v(self, dist):
+        swath = self.get_swath_v(dist)
         smallest_feature = 2 * swath / self.cmos.V
         return smallest_feature
+
+    def pixel_size_real(self, dist):
+        pixel_size_real = dist / self.lens_f * self.cmos.ps
+        return pixel_size_real
+
+    def cal_blur(self, speed, dist):
+        pr = self.pixel_size_real(dist)
+        speed_pixel = speed / pr
+        return speed_pixel
 
 
 def cal_sensor(coms: Cmos, lens_f, agl):
@@ -91,34 +104,39 @@ def cal_sensor(coms: Cmos, lens_f, agl):
     swath = cam.get_swath_h(agl)
     fov_ang = cam.get_fov_h()
     smallest_feature = cam.get_smallest_feature_h(agl)
-    return swath, fov_ang, smallest_feature
+    blur = cam.cal_blur(262.5, agl) / 10000
+    rsl = cam.cmos.get_resolution()
+    return swath, fov_ang, smallest_feature, blur, rsl
 
 
 if __name__ == "__main__":
     IMX541 = Cmos(2.74 / 1000, 4504, 4504, name="IMX541")
     IMX540 = Cmos(2.74 / 1000, 5320, 4600, name="IMX540")
     IMX677 = Cmos(1.12 / 1000, 5700, 5160, name="IMX677")
+    IMX304 = Cmos(3.45 / 1000, 4096, 3000, name="IMX304")
     IMX366 = Cmos(4.40 / 1000, 8228, 5574, name="IMX366")
+    IMX367 = Cmos(3.45 / 1000, 4432, 4446, name="IMX367")
     IMX455 = Cmos(3.76 / 1000, 9602, 6498, name="IMX455")
     IMX571 = Cmos(3.76 / 1000, 6280, 4264, name="IMX571")
     SonyBSI = Cmos(2.48 / 1000, 9600, 6376, name="Sony BSI")
     IMX264 = Cmos(3.45 / 1000, 2448, 2048, name="IMX264")
     Cannon5D = Cmos(5.36 / 1000, 6720, 4480, name="Cannon 5D mark IV")
     SonyILx = Cmos(3.8 / 1000, 9504, 6336, name="SonyILx")
-    # sensor_list = [IMX366, IMX455, IMX540, IMX541, IMX571, IMX677, SonyBSI, Cannon5D]
-    sensor_list = [IMX541, IMX540, IMX264, SonyILx]
-    lens_list = [8, 12, 16, 20, 24,35, 50]
+    IMX342 = Cmos(3.45 / 1000, 6480, 4870, name="IMX342")
+    sensor_list = [IMX264, IMX304, IMX342, IMX366, IMX367, IMX455, IMX540, IMX541, IMX571, IMX677, SonyBSI, Cannon5D, SonyILx]
+    lens_list = [8, 12, 16, 20, 24, 35, 50]
     agl = 4500
-    with open("rst.csv", "w") as f:
-        f.write("Sensor,lens(mm),AGL,fov(deg),swath,smallest feature, pixel size, H, V\n")
+    with open("cameras.csv", "w") as f:
+        f.write("Sensor,lens(mm),AGL,fov(deg),swath,smallest feature, pixel size, H, V, blur(pixel/10000s @ "
+                "262.5feet/s), Resolution\n")
         for s in sensor_list:
             for lens in lens_list:
-                swath, fov_ang, smallest_feature = cal_sensor(s, lens, agl)
+                swath, fov_ang, smallest_feature, blur, rsl = cal_sensor(s, lens, agl)
                 fov_deg = math.degrees(fov_ang)
-                if 40 <= fov_deg <= 90:
+                if 46 <= fov_deg <= 70:
                     print(s.name, "    lens: ", lens, "    fov: ", fov_deg, "    swath:", swath,
-                          "    smallest feature: ", smallest_feature)
+                          "    smallest feature: ", smallest_feature, "    blur(pixel/10000s @ GS 262.5feet/s)", blur)
                     line = s.name + "," + str(lens) + "," + str(agl) + "," + str(fov_deg) + "," + \
                            str(swath) + "," + str(smallest_feature) + "," + str(s.ps) + "," + str(s.H) + "," + str(
-                        s.V) + "\n"
+                        s.V) + "," + str(blur) + "," + str(rsl/1000000) + "\n"
                     f.write(line)
